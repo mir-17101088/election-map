@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangladesh Election Map 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+
+<body>
+    <div id="winner-toolbar" class="winner-toolbar">
+        <div class="ticker-title">LIVE WINNERS</div>
+        <div id="ticker-content" class="ticker-content">Waiting for results...</div>
+    </div>
+    <div class="map-container">
+        <h1 class="map-title"></h1>
+        <div id="map"></div>
+        <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+    </div>
+    <script type="module" src="map_script.js"></script>
+</body>
+
+</html>

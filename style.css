@@ -1,0 +1,198 @@
+:root {
+    --bg-color: #ffffff;
+    --map-fill: #e2e8f0;
+    /* Professional Light Grey */
+    --map-stroke: #1e293b;
+    /* Dark Blue/Grey Border */
+    --map-hover: #94a3b8;
+    /* Medium Grey for hover */
+    --text-primary: #0f172a;
+    /* Dark text */
+    --text-secondary: #475569;
+    --accent: #000000;
+    /* Deep Black for special areas (Chattogram/Dhaka/Khulna frames) */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-primary);
+    overflow: hidden;
+    /* Prevent scroll bars for iframe usage */
+}
+
+.map-container {
+    width: 100vw;
+    height: calc(100vh - 40px);
+    /* Adjust for toolbar height */
+    margin-top: 40px;
+    /* Offset for toolbar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-color: var(--bg-color);
+}
+
+.map-title {
+    position: absolute;
+    top: 20px;
+    z-index: 10;
+    font-weight: 300;
+    letter-spacing: 1px;
+    font-size: 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    pointer-events: none;
+}
+
+#map {
+    width: 100%;
+    flex: 1;
+    /* Fill available space in flex container */
+    min-height: 0;
+    /* Prevent overflow in flex column */
+}
+
+.district {
+    fill: var(--map-fill);
+    stroke: var(--map-stroke);
+    stroke-width: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    /* Optional: Hardware acceleration for smoother transitions */
+    transform: translateZ(0);
+}
+
+.district:hover {
+    fill: var(--map-hover);
+    stroke: var(--text-primary);
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+}
+
+.tooltip {
+    position: absolute;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    padding: 12px 16px;
+    border-radius: 8px;
+    pointer-events: none;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 20;
+    min-width: 150px;
+    transform: translate(-50%, -100%);
+    /* Center tooltip above cursor */
+    margin-top: -15px;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.tooltip-info {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Scrollbar styling for candidate view */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--map-stroke);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Live Winner Toolbar Styles */
+.winner-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: #1e293b;
+    border-bottom: 2px solid #3b82f6;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.ticker-title {
+    background: #3b82f6;
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    white-space: nowrap;
+    position: relative;
+    z-index: 5;
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.ticker-content {
+    display: flex;
+    white-space: nowrap;
+    padding-left: 100%;
+    /* Start off-screen */
+    animation: ticker 60s linear infinite;
+}
+
+.winner-item {
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.winner-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.winner-constituency {
+    font-weight: 600;
+}
+
+.winner-name {
+    color: #94a3b8;
+}
+
+@keyframes ticker {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-200%);
+    }
+}

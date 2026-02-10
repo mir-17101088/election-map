@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constituency Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --card-bg: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent: #2563eb;
+            --border: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            padding: 2rem;
+            margin: 0;
+        }
+
+        h1 {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .seat-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .seat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .seat-card:hover {
+            border-color: var(--accent);
+        }
+
+        .seat-header {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .seat-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .seat-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .candidates-list {
+            display: block;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .candidate-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .candidate-item:last-child {
+            border-bottom: none;
+        }
+
+        .party-box {
+            background: rgba(96, 165, 250, 0.1);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .candidate-name {
+            font-weight: 400;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1 id="page-title">Loading...</h1>
+        <div id="content" class="seat-container">
+            <div class="loading">Fetching data...</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const districtParam = params.get('district');
+
+            if (!districtParam) {
+                document.getElementById('page-title').innerText = "No District Selected";
+                document.querySelector('.loading').innerText = "";
+                return;
+            }
+
+            document.getElementById('page-title').innerText = `${districtParam} Constituency`;
+
+            try {
+                // Fetch data again (simplest way without confusing window comms)
+                const response = await fetch('election_data.json');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+
+                const seats = [];
+
+                // Find all seats for this district
+                // electionData.divisions is { DivisionName: [seats...] }
+                const typeParam = params.get('type'); // 'constituency' or undefined (default district)
+
+                // Find seats
+                Object.values(data.divisions || {}).forEach(divisionSeats => {
+                    divisionSeats.forEach(seat => {
+                        let match = false;
+                        if (typeParam === 'constituency') {
+                            // Normalized match on seat name to handle apostrophes/spaces
+                            if (normalize(seat.seat_name) === normalize(districtParam)) match = true;
+                        } else {
+                            // Normalized match on district name
+                            if (normalize(seat.district_name) === normalize(districtParam)) match = true;
+                        }
+
+                        if (match) {
+                            seats.push(seat);
+                        }
+                    });
+                });
+
+                // Helper to normalize names (same as map_script.js)
+                function normalize(str) {
+                    if (!str) return '';
+                    return str.replace(/[''""’“”]/g, '')
+                        .trim()
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '');
+                }
+
+                const contentDiv = document.getElementById('content');
+                contentDiv.innerHTML = ''; // Clear loading
+
+                if (seats.length === 0) {
+                    contentDiv.innerHTML = '<div class="loading">No seats found for this district.</div>';
+                    return;
+                }
+
+                // Render seats
+                seats.forEach(seat => {
+                    // Create Card
+                    const card = document.createElement('div');
+                    card.className = 'seat-card';
+                    // Open by default if there are few seats, otherwise closed
+                    // Let's verify candidates exist. In the raw text earlier, 
+                    // candidates were likely separate or nested?
+                    // Wait, the earlier `Code.txt` snippets showed "seats" but I didn't verify if `candidates` list is INSIDE the seat object.
+                    // The view_js call showed:
+                    // "divisions": { "Barishal": [{ "seat_name":..., "seat_id":... }] }
+                    // BUT keys like "318686": [{ "name":..., "party":... }] were OUTSIDE divisions, usually at root level or under 'candidates'.
+                    // I need to check the `election_data.json` structure for CANDIDATES.
+
+                    // IMPORTANT: My extract script extracted the start of `election2026`.
+                    // The candidates mapping might be a separate object keys by seat_id.
+                    // Let's assume the json dump includes keys like "318686": [...] 
+                    // If my python script extracted the WHOLE object, it should be there.
+
+                    // Let's render the list based on what we find.
+
+                    const candidatesKey = seat.seat_id.toString();
+                    const candidates = (data.candidates && data.candidates[candidatesKey]) ? data.candidates[candidatesKey] : [];
+
+                    let candidatesHtml = '';
+                    if (candidates.length > 0) {
+                        candidatesHtml = candidates.map(c => `
+                            <div class="candidate-item">
+                                <span class="candidate-name">${c.name}</span>
+                                <span class="party-box">${c.party}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        candidatesHtml = '<div class="loading" style="margin:0">No candidates data available.</div>';
+                    }
+
+                    // Card HTML
+                    card.innerHTML = `
+                        <div class="seat-header">
+                            <div>
+                                <div class="seat-title">${seat.seat_name}</div>
+                                <div class="seat-subtitle">Seat Number: ${seat.seat_number}</div>
+                            </div>
+                        </div>
+                        <div class="candidates-list">
+                            ${candidatesHtml}
+                        </div>
+                    `;
+
+                    contentDiv.appendChild(card);
+                });
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('content').innerHTML = '<div class="loading">Error loading data.</div>';
+            }
+        });
+    </script>
+</body>
+
+</html>
