@@ -19,11 +19,11 @@ async function initMap() {
     tooltip = d3.select("#tooltip");
 
     try {
-        setStatus("Loading map data...");
-        const [svgXml, electionData] = await Promise.all([
-            d3.xml("map_constituencies.svg"),
-            d3.json("election_data.json")
-        ]);
+        setStatus("Loading map SVG...");
+        const svgXml = await d3.xml("map_constituencies.svg").catch(e => { throw new Error(`SVG file not found (404) or failed: ${e.message}`); });
+
+        setStatus("Loading election data...");
+        const electionData = await d3.json("election_data.json").catch(e => { throw new Error(`Election JSON not found (404) or failed: ${e.message}`); });
 
         setStatus("Processing data...");
 
@@ -234,4 +234,3 @@ async function fetchLiveResults() {
         console.warn("Local fetch failed:", err.message);
     }
 }
-
