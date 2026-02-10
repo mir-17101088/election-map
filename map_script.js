@@ -1,22 +1,31 @@
-// Map Script for Bangladesh Election 2026
 import firebaseConfig from './firebase_config.js';
 
 let currentLiveResults = {}; // Global store for hover handlers
 let seatMap = new Map();
 let tooltip;
 
-document.addEventListener('DOMContentLoaded', async () => {
+// Status helper
+function setStatus(msg, isError = false) {
+    const ticker = document.getElementById('ticker-content');
+    if (ticker) {
+        ticker.style.color = isError ? "#f87171" : "white";
+        ticker.innerHTML = msg;
+    }
+    console.log(`[MAP STATUS] ${msg}`);
+}
+
+async function initMap() {
     const mapContainer = d3.select("#map");
     tooltip = d3.select("#tooltip");
 
     try {
-        // Load data concurrently
+        setStatus("Loading map data...");
         const [svgXml, electionData] = await Promise.all([
             d3.xml("map_constituencies.svg"),
             d3.json("election_data.json")
         ]);
 
-        console.log("SVG and Election Data loaded.");
+        setStatus("Processing data...");
 
         // Append SVG to the container
         const svgNode = svgXml.documentElement;
@@ -58,15 +67,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Apply interactivity
         const constituencies = svgElement.selectAll(".constituency-area");
+        if (constituencies.empty()) {
+            throw new Error("SVG loaded but no '.constituency-area' elements found.");
+        }
+
         attachInteractivity(constituencies);
+        setStatus("Waiting for results...");
 
         // --- Live Results Logic ---
         initFirebase();
 
     } catch (error) {
-        console.error("Error loading map data:", error);
+        setStatus(`Error: ${error.message}`, true);
+        console.error("Critical error in initMap:", error);
     }
-});
+}
+
+// Start the app
+initMap();
 
 /**
  * Shared function to normalize names for mapping
@@ -216,3 +234,4 @@ async function fetchLiveResults() {
         console.warn("Local fetch failed:", err.message);
     }
 }
+
