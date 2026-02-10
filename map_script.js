@@ -211,12 +211,18 @@ function initFirebase() {
     }
 
     try {
+        console.log("Initializing Firebase with config...");
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        db.ref('live_results').on('value', (snapshot) => {
+        const resultsRef = db.ref('live_results');
+
+        resultsRef.on('value', (snapshot) => {
             const data = snapshot.val();
+            console.log("Firebase data received:", data);
             if (data) updateMapWithData(data);
         });
+
+        console.log("Firebase listener attached to 'live_results'");
     } catch (error) {
         console.error("Firebase init failed:", error);
         fetchLiveResults();
